@@ -1,167 +1,140 @@
-Spine Alignment Detector
+# Spine Alignment Detector
 
-An Arduino and Python system for monitoring posture through changes in an accelerometer's orientation. The project was developed for the second homework assignment in Praktikum iz merno-akvizicionih sistema (13Е052ПМС), academic year 2025/2026.
+An Arduino and Python system for monitoring posture through changes in an accelerometer's orientation. This project was developed for the second homework assignment in **Praktikum iz merno-akvizicionih sistema**, academic year **2025/2026**.
 
-The system establishes a reference position through calibration, detects angular deviations from that reference, and counts them on both a desktop interface and a four-digit display. An LED provides an alert when a deviation continues for a user-defined duration.
+The system calibrates a reference position, detects angular deviations from that reference, and counts them on both a desktop interface and a four-digit display. An LED provides an alert when a deviation continues for a user-defined duration.
 
-System design
+## How it works
 
-The project consists of three parts:
+The Arduino reads the accelerometer every 100 ms using the TimerOne library and sends measurements to Python through a USB serial connection.
 
-Arduino firmware: reads the accelerometer and capacitive touch sensor, sends measurements to Python, and controls the display and onboard LED.
+The application follows these stages:
 
-Python data processing: converts sensor readings into acceleration values, calculates the deviation angle, and tracks the number and duration of deviations.
+1. **Start acquisition:** Pressing START in the interface enables sensor acquisition on the Arduino.
+2. **Calibration:** Touching the capacitive sensor starts a three-second calibration. The user maintains the reference posture while Python averages the acceleration components and displays the reference values.
+3. **Movement test:** A second touch starts an eight-second test. The user tilts forward and backward while the application records the maximum deviation angle.
+4. **Threshold selection:** After the test, the user enters an angle threshold and a minimum duration for the LED alert, then presses POTVRDI to begin monitoring.
+5. **Active monitoring:** Python calculates the angle between the current acceleration vector and the calibrated reference. It counts deviations, tracks their duration, and sends commands to the Arduino display and LED.
+6. **Session export:** Pressing STOP ends acquisition and saves the session results to a text file.
 
-PyQt5 interface: provides session controls, threshold settings, measurement displays, and status messages.
+A deviation is counted once when the angle first exceeds the threshold. The LED turns on when the continuous deviation reaches the selected minimum duration. Returning to or below the threshold turns the LED off and resets the continuous timer.
 
-The Arduino and Python application communicate over USB serial at 9600 baud. A TimerOne interrupt requests acquisition every 100 ms, corresponding to a nominal sampling rate of 10 Hz. Touch detection uses an external interrupt on D2. Python reads serial messages in a background thread and passes them to the interface through a Qt signal.
+The counter includes both short and prolonged deviations. The minimum-duration setting controls the LED alert.
 
-How it works
+## System components
 
-Start acquisition. Pressing START in the Python interface enables sensor acquisition on the Arduino.
+The project contains three connected parts:
 
-Calibrate the reference. A touch on the capacitive sensor starts a three-second calibration. The sensor remains still in the selected upright reference position while Python averages its acceleration components. The resulting reference values are displayed in the interface.
+- **Arduino firmware:** Sensor acquisition, touch detection through interrupts, serial communication, and control of the display and onboard LED.
+- **Python processing:** Calibration, acceleration conversion, angle calculation, deviation counting, and session export.
+- **PyQt5 interface:** Session controls, threshold inputs, measurements, and status messages.
 
-Test the movement range. A second touch starts an eight-second test. The user tilts the sensor forward and backward, and the application records the maximum deviation angle. After the test, the user enters an angle threshold and a minimum duration, then presses POTVRDI to begin monitoring.
+Python reads serial messages in a background thread and passes them to the interface through a Qt signal. Both programs communicate at 9600 baud.
 
-Monitor deviations. The application compares the current acceleration vector with the reference vector using the dot product to calculate their angle. A new episode above the angle threshold adds one to the counter. The count appears in the interface and on the TM1637 display. If the episode reaches the selected minimum duration, the onboard LED turns on. Returning to or below the threshold turns it off and resets the continuous timer.
+The Python application was developed in Spyder. The interface and source-code comments are in Serbian.
 
-Stop and save. Pressing STOP ends acquisition and saves a summary of the session.
+## Hardware
 
-The counter includes short deviations as well as prolonged ones. The minimum-duration setting controls the LED alert. The total accumulated time includes all time spent above the angle threshold.
+- Arduino UNO R3
+- Analog three-axis accelerometer
+- Capacitive touch sensor
+- TM1637 four-digit seven-segment display
+- Arduino onboard LED
+- USB cable and connecting wires
 
-Hardware
+The following connections are specified in the assignment for the supplied modules:
 
-Arduino UNO R3
+| Component | Component pin | Arduino pin |
+| --- | --- | --- |
+| TM1637 display | CLK | D9 |
+| TM1637 display | DIO | D8 |
+| TM1637 display | Vcc | 5V |
+| TM1637 display | GND | GND |
+| Capacitive touch sensor | I/O | D2 |
+| Capacitive touch sensor | Vcc | 5V |
+| Capacitive touch sensor | GND | GND |
+| Accelerometer | X | A0 |
+| Accelerometer | Y | A1 |
+| Accelerometer | Z | A2 |
+| Accelerometer | Vcc | 5V |
+| Accelerometer | GND | GND |
 
-Analog three-axis accelerometer
+The sketch controls the onboard LED through D13.
 
-Capacitive touch sensor
+## Setup
 
-TM1637 four-digit seven-segment display
+### Arduino
 
-Arduino onboard LED
+Install these libraries in Arduino IDE:
 
-USB cable and connecting wires
+- [TimerOne](https://github.com/PaulStoffregen/TimerOne)
+- [TM1637Display](https://github.com/avishorp/TM1637)
 
-The following connections follow Table 1.1 of the assignment for the supplied modules:
+Open the Arduino sketch, select Arduino UNO and the correct serial port, and upload it to the board.
 
-Component
+Close the Arduino Serial Monitor before connecting from Python.
 
-Component pin
+### Python
 
-Arduino pin
+Install the dependencies in the Python environment used by Spyder:
 
-TM1637 display
-
-CLK
-
-D9
-
-TM1637 display
-
-DIO
-
-D8
-
-TM1637 display
-
-Vcc
-
-5V
-
-TM1637 display
-
-GND
-
-GND
-
-Capacitive touch sensor
-
-I/O
-
-D2
-
-Capacitive touch sensor
-
-Vcc
-
-5V
-
-Capacitive touch sensor
-
-GND
-
-GND
-
-Accelerometer
-
-X
-
-A0
-
-Accelerometer
-
-Y
-
-A1
-
-Accelerometer
-
-Z
-
-A2
-
-Accelerometer
-
-Vcc
-
-5V
-
-Accelerometer
-
-GND
-
-GND
-
-The sketch uses D13 to control the onboard LED. The assignment does not specify the accelerometer or touch-sensor model.
-
-Software and setup
-
-The Python application was developed in Spyder. Its interface and source comments are in Serbian.
-
-Install the Python dependencies in the environment used to run the application:
-
+```bash
 python -m pip install PyQt5 pyserial
+```
 
-Install the Arduino libraries TimerOne and TM1637Display, then upload the Arduino sketch to the UNO R3.
+In the Python script, change the serial port to match the connected Arduino:
 
-In the Python script, set the serial port to match the board:
-
+```python
 self.serial_port_name = "COM5"
+```
 
-Close the Arduino Serial Monitor, run the Python script in Spyder, and press START. Keep the computer connected during monitoring, since Python performs the calculations and sends display and LED commands to the Arduino.
+Run the Python script in Spyder and press START.
 
-The optional bad_posture.gif animation belongs in the same folder as the Python script. If it is absent, the application displays a message and continues running.
+Keep the computer connected during monitoring because Python performs the calculations and sends commands to the display and LED.
 
-Interface and saved results
+To include the optional animation, place `bad_posture.gif` in the same folder as the Python script. The application also runs without it.
 
-The interface displays the current acceleration components, calculated angle, calibrated reference values, deviation count, accumulated time above the threshold, and current session stage.
+## Angle calculation
 
-Pressing STOP writes the following to monitor_drzanja.txt in the current working directory:
+The reference acceleration vector is calculated by averaging the measurements collected during calibration.
 
-Mean reference acceleration values: axcal, aycal, and azcal
+The deviation angle is then calculated from the dot product of the current and reference vectors:
 
-Total number of detected deviations
+```text
+angle = acos(dot(current, reference) / (norm(current) * norm(reference)))
+```
 
-Total time spent above the angle threshold
+The result is converted to degrees. The cosine value is limited to the range [-1, 1] before applying `acos` to prevent numerical rounding errors.
 
-Each save overwrites the previous file. Closing the window stops the session without saving.
+## Interface
 
-Implementation notes
+The desktop interface displays:
 
-The assignment specifies an eight-second movement test but also mentions choosing the threshold after five seconds. This implementation completes the full eight-second test before enabling threshold entry.
+- Current acceleration components: ax, ay, and az
+- Calculated deviation angle
+- Calibrated reference acceleration values
+- Total number of detected deviations
+- Total time spent above the angle threshold
+- Current calibration, testing, or monitoring stage
 
-Touch events less than 300 ms apart are treated as one touch. The conversion from raw readings uses an offset of 337 and a sensitivity of 67 counts per g, with the X and Y axes inverted. These constants depend on the sensor and ADC setup; the reference-position calibration averages converted readings without changing the constants.
+The deviation count is also shown on the physical TM1637 display.
 
-The measured angle represents sensor orientation relative to the calibrated reference. Movement-related acceleration and fluctuations around the threshold can affect detection. No filtering or hysteresis is applied in the current implementation.
+## Saved results
+
+Pressing STOP saves the following information to `monitor_drzanja.txt`:
+
+- Mean reference acceleration values: axcal, aycal, and azcal
+- Total number of detected deviations
+- Total time spent above the angle threshold
+
+The file is saved in the current working directory. Each save overwrites its previous contents. Closing the application window stops monitoring without saving.
+
+## Implementation notes
+
+The assignment specifies an eight-second movement test but also mentions selecting the threshold after five seconds. This implementation completes the eight-second test before enabling threshold entry.
+
+Touch events less than 300 ms apart are treated as one touch.
+
+Conversion from raw sensor readings uses an offset of 337 and a sensitivity of 67 counts per g, with the X and Y axes inverted. These constants depend on the sensor and ADC setup. Reference-posture calibration averages the converted readings without recalculating these constants.
+
+The measured angle represents sensor orientation relative to the calibrated reference. Movement-related acceleration and fluctuations around the threshold can affect detection. The current implementation does not apply filtering or hysteresis.
