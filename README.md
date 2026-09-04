@@ -138,3 +138,5 @@ Touch events less than 300 ms apart are treated as one touch.
 Conversion from raw sensor readings uses an offset of 337 and a sensitivity of 67 counts per g, with the X and Y axes inverted. These constants depend on the sensor and ADC setup. Reference-posture calibration averages the converted readings without recalculating these constants.
 
 The measured angle represents sensor orientation relative to the calibrated reference. Movement-related acceleration and fluctuations around the threshold can affect detection. The current implementation does not apply filtering or hysteresis.
+
+
